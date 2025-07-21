@@ -4,10 +4,26 @@ eventlet.monkey_patch()
 
 import threading
 import socket
+import logging
+import sys
 from datetime import datetime
 
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
+
+# --- Logging Configuration ---
+# Configure logging to work with systemd
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Force stdout to be unbuffered for immediate log visibility
+sys.stdout.reconfigure(line_buffering=True)
 
 # --- Application Setup ---
 app = Flask(__name__)
@@ -19,10 +35,10 @@ socketio = SocketIO(app, async_mode='eventlet')
 # --- Port Monitoring Configuration ---
 # Dictionary of ports to monitor with their descriptions
 PORTS_TO_MONITOR = {
+    22: {"name": "SSH", "description": "Secure Shell"},
     23: {"name": "TELNET", "description": "Telnet Protocol"},
     25: {"name": "SMTP", "description": "Email Server"},
     53: {"name": "DNS", "description": "Domain Name System"},
-    80: {"name": "HTTP", "description": "Web Server"},
     110: {"name": "POP3", "description": "Email Retrieval"},
     135: {"name": "RPC", "description": "Windows RPC"},
     139: {"name": "NetBIOS", "description": "Windows File Sharing"},
@@ -54,7 +70,7 @@ def listen_on_port(port):
             s.bind(('0.0.0.0', port))
             # Start listening for incoming connections
             s.listen()
-            print(f"[*] Successfully listening on port {port}...")
+            logger.info(f"Successfully listening on port {port} ({PORTS_TO_MONITOR[port]['name']})")
 
             # Loop forever to accept all incoming connection attempts
             while True:
@@ -66,7 +82,7 @@ def listen_on_port(port):
                         attacker_ip = addr[0]
                         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         
-                        print(f"[!] Connection attempt from {attacker_ip} on port {port}")
+                        logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
 
                         # Prepare the data to be sent to the frontend
                         data = {
@@ -77,16 +93,20 @@ def listen_on_port(port):
                         # Emit a 'new_connection' event over the WebSocket
                         socketio.emit('new_connection', data)
                 except Exception as e:
-                    print(f"[!] Error accepting connection on port {port}: {e}")
+                    logger.error(f"Error accepting connection on port {port}: {e}")
     except OSError as e:
         if e.errno == 98:  # Address already in use
-            print(f"[!] Port {port} is already in use by another service - skipping")
+            if port == 22:
+                logger.warning(f"Port 22 (SSH) is already in use by another service")
+                logger.info(f"If you moved SSH to another port, this conflict should not occur")
+            else:
+                logger.warning(f"Port {port} is already in use by another service - skipping")
         elif e.errno == 13:  # Permission denied
-            print(f"[!] Permission denied for port {port} - need root privileges")
+            logger.error(f"Permission denied for port {port} - need root privileges")
         else:
-            print(f"[!] Failed to bind to port {port}: {e}")
+            logger.error(f"Failed to bind to port {port}: {e}")
     except Exception as e:
-        print(f"[!] Unexpected error on port {port}: {e}")
+        logger.error(f"Unexpected error on port {port}: {e}")
 
 # --- Web Server Routes ---
 
@@ -101,8 +121,12 @@ def index():
 if __name__ == '__main__':
     import os
     
-    # Get port from environment variable (App Runner compatibility)
-    port = int(os.environ.get('PORT', 5000))
+    # Get port from environment variable (default to 80 for web interface)
+    port = int(os.environ.get('PORT', 80))
+    
+    logger.info("=== INTERNET IS NASTY HONEYPOT STARTING ===")
+    logger.info(f"Web interface will be available on port {port}")
+    logger.info(f"Monitoring {len(PORTS_TO_MONITOR)} ports for intrusion attempts")
     
     # Create and start a new thread for each port in our list
     threads = []
@@ -112,12 +136,14 @@ if __name__ == '__main__':
         thread.daemon = True
         thread.start()
         threads.append(thread)
-        print(f"[*] Started listener thread for port {monitor_port}")
+        logger.info(f"Started monitoring thread for port {monitor_port} ({PORTS_TO_MONITOR[monitor_port]['name']})")
 
     # Start the Flask-SocketIO server
     # We use socketio.run instead of app.run to enable WebSocket support
     # Disable use_reloader to prevent thread conflicts
-    print(f"[*] Starting Flask-SocketIO server on port {port}...")
+    logger.info(f"Starting Flask-SocketIO web server on port {port}")
+    logger.info("Honeypot is now active and monitoring for threats!")
+    
     # Use debug=True for local development, False for production
     is_production = os.environ.get('LIGHTSAIL_PRODUCTION', 'false').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=not is_production, use_reloader=False)

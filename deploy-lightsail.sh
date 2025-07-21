@@ -46,9 +46,12 @@ User=root
 WorkingDirectory=/home/ec2-user/Internetisnasty
 Environment=PATH=/home/ec2-user/Internetisnasty/venv/bin
 Environment=LIGHTSAIL_PRODUCTION=true
+Environment=PYTHONUNBUFFERED=1
 ExecStart=/home/ec2-user/Internetisnasty/venv/bin/python app.py
 Restart=always
 RestartSec=3
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -65,11 +68,15 @@ echo "🔥 Configuration du firewall..."
 echo "ℹ️  AWS Lightsail gère le firewall au niveau infrastructure."
 echo "🔧 Configurez les ports dans la console Lightsail :"
 echo "   - Allez dans Lightsail Console > Votre instance > Networking > Firewall"
-echo "   - Ajoutez ces ports : 5000,23,25,53,80,110,135,139,143,445,993,995,1433,3306,3389,5900,8080"
+echo "   - Ajoutez ces ports : 80,22,23,25,53,110,135,139,143,445,993,995,1433,3306,3389,5900,8080"
 echo "   - Type: TCP, Source: Anywhere (0.0.0.0/0)"
 echo "✅ Pas de firewall local nécessaire sur la VM !"
 
 echo "✅ Déploiement terminé !"
-echo "🌐 Votre honeypot est accessible sur : http://VOTRE_IP_LIGHTSAIL:5000"
+echo "🌐 Votre honeypot est accessible sur : http://VOTRE_IP_LIGHTSAIL"
 echo "📊 Status du service : sudo systemctl status internet-is-nasty"
 echo "📋 Logs en temps réel : sudo journalctl -u internet-is-nasty -f"
+echo ""
+echo "✅ CONFIGURATION SSH :"
+echo "   Si vous avez déplacé SSH sur un autre port, le honeypot peut maintenant"
+echo "   surveiller le port 22 et capturer les tentatives d'intrusion SSH !"
