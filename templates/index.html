@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet is Nasty</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="title flicker">INTERNET IS NASTY</h1>
+            <p class="subtitle">This is a real-time view of unsolicited connection attempts this server faces every second. Every flash is another random probe from the dark corners of the web.</p>
+            <div class="total-threats">
+                Total Threats Detected: <span id="total-threats-count">0</span>
+            </div>
+        </header>
+
+        <main id="threat-grid">
+            {% for port, details in ports.items() %}
+            <div class="threat-card" id="port-{{ port }}">
+                <div class="port-number">{{ port }}</div>
+                <div class="port-details">
+                    <div class="port-name">{{ details.name }}</div>
+                    <div class="port-description">{{ details.description }}</div>
+                </div>
+                <div class="attack-info">
+                    <div class="attack-label">Attempts:</div>
+                    <div class="attack-count" id="count-{{ port }}">0</div>
+                </div>
+            </div>
+            {% endfor %}
+        </main>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+
