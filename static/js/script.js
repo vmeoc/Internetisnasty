@@ -3,8 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalThreatsCount = document.getElementById('total-threats-count');
     const attackEntries = document.getElementById('attack-entries');
-    const refreshHistoryBtn = document.getElementById('refresh-history');
-    const clearHistoryBtn = document.getElementById('clear-history');
     let totalThreats = 0;
     let attackHistory = [];
 
@@ -163,17 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error loading daily stats:', error);
             });
     }
-
-    // Event Listeners
-    refreshHistoryBtn.addEventListener('click', () => {
-        loadRecentAttacks();
-        loadDailyStats();
-    });
-
-    clearHistoryBtn.addEventListener('click', () => {
-        attackHistory = [];
-        renderAttackHistory();
-    });
 
     // Load initial data
     loadRecentAttacks();
