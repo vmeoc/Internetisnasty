@@ -6,7 +6,12 @@ import threading
 import socket
 import logging
 import sys
-from datetime import datetime
+import sqlite3
+import schedule
+import time
+import os
+from datetime import datetime, timezone
+import pytz
 
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
@@ -53,6 +58,158 @@ PORTS_TO_MONITOR = {
     8080: {"name": "HTTP-ALT", "description": "Alternate Web"}
 }
 
+# --- Database Configuration ---
+DB_PATH = 'honeypot_attacks.db'
+PARIS_TZ = pytz.timezone('Europe/Paris')
+
+def init_database():
+    """Initialize SQLite database with required tables"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Table for individual attacks
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS attacks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            port INTEGER NOT NULL,
+            ip_address TEXT NOT NULL,
+            timestamp DATETIME NOT NULL,
+            date_only DATE NOT NULL
+        )
+    ''')
+    
+    # Table for daily statistics
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS daily_stats (
+            date DATE NOT NULL,
+            port INTEGER NOT NULL,
+            attack_count INTEGER DEFAULT 0,
+            PRIMARY KEY (date, port)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    logger.info("Database initialized successfully")
+
+def log_attack_to_db(port, ip_address):
+    """Log an attack to the database"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Get current time in Paris timezone
+        now_paris = datetime.now(PARIS_TZ)
+        date_only = now_paris.date()
+        
+        # Insert attack record
+        cursor.execute('''
+            INSERT INTO attacks (port, ip_address, timestamp, date_only)
+            VALUES (?, ?, ?, ?)
+        ''', (port, ip_address, now_paris, date_only))
+        
+        # Update daily stats
+        cursor.execute('''
+            INSERT OR REPLACE INTO daily_stats (date, port, attack_count)
+            VALUES (?, ?, COALESCE((SELECT attack_count FROM daily_stats WHERE date=? AND port=?), 0) + 1)
+        ''', (date_only, port, date_only, port))
+        
+        conn.commit()
+        conn.close()
+        
+    except Exception as e:
+        logger.error(f"Error logging attack to database: {e}")
+
+def get_daily_stats():
+    """Get today's attack statistics"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        today = datetime.now(PARIS_TZ).date()
+        
+        cursor.execute('''
+            SELECT port, attack_count FROM daily_stats 
+            WHERE date = ?
+            ORDER BY port
+        ''', (today,))
+        
+        stats = {}
+        for port, count in cursor.fetchall():
+            stats[port] = count
+            
+        conn.close()
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting daily stats: {e}")
+        return {}
+
+def get_recent_attacks(limit=50):
+    """Get recent attacks for display"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT port, ip_address, timestamp FROM attacks 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        ''', (limit,))
+        
+        attacks = []
+        for port, ip, timestamp in cursor.fetchall():
+            attacks.append({
+                'port': port,
+                'ip': ip,
+                'timestamp': timestamp,
+                'port_name': PORTS_TO_MONITOR.get(port, {}).get('name', 'Unknown')
+            })
+            
+        conn.close()
+        return attacks
+        
+    except Exception as e:
+        logger.error(f"Error getting recent attacks: {e}")
+        return []
+
+def reset_daily_counters():
+    """Reset daily counters at midnight (called by scheduler)"""
+    try:
+        logger.info("Performing daily reset of attack counters (midnight Paris time)")
+        
+        # Archive yesterday's data and prepare for new day
+        today = datetime.now(PARIS_TZ).date()
+        logger.info(f"Daily reset completed for {today}")
+        
+        # Optional: Clean up old data (keep last 30 days)
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            DELETE FROM attacks 
+            WHERE date_only < date('now', '-30 days')
+        ''')
+        
+        cursor.execute('''
+            DELETE FROM daily_stats 
+            WHERE date < date('now', '-30 days')
+        ''')
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info("Old data cleanup completed (kept last 30 days)")
+        
+    except Exception as e:
+        logger.error(f"Error during daily reset: {e}")
+
+def run_scheduler():
+    """Run the scheduler in a separate thread"""
+    while True:
+        schedule.run_pending()
+        time.sleep(60)  # Check every minute
+
 # --- Backend Logic ---
 
 def listen_on_port(port):
@@ -84,6 +241,9 @@ def listen_on_port(port):
                         
                         logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
 
+                        # Log attack to database
+                        log_attack_to_db(port, attacker_ip)
+
                         # Prepare the data to be sent to the frontend
                         data = {
                             'port': port,
@@ -113,8 +273,19 @@ def listen_on_port(port):
 @app.route('/')
 def index():
     """Serves the main HTML page."""
-    # Flask will look for this file in the 'templates' folder
-    return render_template('index.html', ports=PORTS_TO_MONITOR)
+    # Get current daily stats to initialize the interface
+    daily_stats = get_daily_stats()
+    return render_template('index.html', ports=PORTS_TO_MONITOR, daily_stats=daily_stats)
+
+@app.route('/api/stats')
+def api_stats():
+    """API endpoint for current daily statistics"""
+    return jsonify(get_daily_stats())
+
+@app.route('/api/recent-attacks')
+def api_recent_attacks():
+    """API endpoint for recent attacks"""
+    return jsonify(get_recent_attacks(100))
 
 # --- Main Execution ---
 
@@ -127,6 +298,19 @@ if __name__ == '__main__':
     logger.info("=== INTERNET IS NASTY HONEYPOT STARTING ===")
     logger.info(f"Web interface will be available on port {port}")
     logger.info(f"Monitoring {len(PORTS_TO_MONITOR)} ports for intrusion attempts")
+    
+    # Initialize database
+    init_database()
+    
+    # Setup daily reset scheduler (midnight Paris time)
+    schedule.every().day.at("00:00").do(reset_daily_counters)
+    logger.info("Scheduled daily reset at midnight (Paris time)")
+    
+    # Start scheduler thread
+    scheduler_thread = threading.Thread(target=run_scheduler)
+    scheduler_thread.daemon = True
+    scheduler_thread.start()
+    logger.info("Scheduler thread started")
     
     # Create and start a new thread for each port in our list
     threads = []

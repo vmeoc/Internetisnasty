@@ -167,3 +167,141 @@ header {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #777; /* Lighter grey on hover */
 }
+
+/* --- Attack History Section --- */
+.attack-history {
+  margin-top: 3rem;
+  background: rgba(30, 30, 30, 0.9);
+  border-radius: 15px;
+  padding: 2rem;
+  border: 1px solid #333;
+}
+
+.attack-history h2 {
+  color: #ff6b6b;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+.history-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.attack-log {
+  background: #1a1a1a;
+  border-radius: 10px;
+  border: 1px solid #333;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.log-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+  font-weight: bold;
+  color: #ff6b6b;
+  border-radius: 10px 10px 0 0;
+}
+
+.attack-entry {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px 1fr;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #333;
+  transition: background-color 0.3s ease;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.attack-entry:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.attack-entry:last-child {
+  border-bottom: none;
+}
+
+.attack-entry.new-entry {
+  background: rgba(255, 107, 107, 0.2);
+  animation: highlightAttack 2s ease-out;
+}
+
+@keyframes highlightAttack {
+  0% {
+    background: rgba(255, 107, 107, 0.4);
+    transform: scale(1.02);
+  }
+  100% {
+    background: rgba(255, 107, 107, 0.1);
+    transform: scale(1);
+  }
+}
+
+.attack-time {
+  color: #4ecdc4;
+}
+
+.attack-ip {
+  color: #ffe66d;
+  font-weight: bold;
+}
+
+.attack-port {
+  color: #ff6b6b;
+  font-weight: bold;
+  text-align: center;
+}
+
+.attack-service {
+  color: #a8e6cf;
+}
+
+/* Mobile responsiveness for attack history */
+@media (max-width: 768px) {
+  .log-header,
+  .attack-entry {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .log-header span,
+  .attack-entry > div {
+    padding: 0.2rem 0;
+  }
+  
+  .attack-history {
+    padding: 1rem;
+  }
+  
+  .history-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+}

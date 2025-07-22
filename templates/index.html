@@ -34,6 +34,25 @@
             </div>
             {% endfor %}
         </main>
+        
+        <section class="attack-history">
+            <h2>Recent Attack History</h2>
+            <div class="history-controls">
+                <button id="refresh-history" class="btn">🔄 Refresh</button>
+                <button id="clear-history" class="btn">🗑️ Clear Display</button>
+            </div>
+            <div class="attack-log" id="attack-log">
+                <div class="log-header">
+                    <span>Time</span>
+                    <span>IP Address</span>
+                    <span>Port</span>
+                    <span>Service</span>
+                </div>
+                <div id="attack-entries">
+                    <!-- Attack entries will be loaded here -->
+                </div>
+            </div>
+        </section>
     </div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>

@@ -10,8 +10,9 @@ echo "📦 Mise à jour du système..."
 sudo dnf update -y
 
 # Installation de Python et pip
-echo "🐍 Installation de Python..."
-sudo dnf install -y python3 python3-pip git libcap
+echo "[*] Installing required packages..."
+sudo dnf update -y
+sudo dnf install -y python3 python3-pip git sqlite libcap
 
 # Clonage du repository
 echo "📥 Clonage du repository..."

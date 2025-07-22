@@ -22,6 +22,17 @@ echo "📚 Vérification des dépendances..."
 source venv/bin/activate
 pip install -r requirements.txt
 
+# Créer une sauvegarde de la base de données si elle existe
+if [ -f "honeypot_attacks.db" ]; then
+    echo "📦 Création d'une sauvegarde de la base de données..."
+    cp honeypot_attacks.db "honeypot_attacks.db.backup.$(date +%Y%m%d_%H%M%S)"
+fi
+
+# Définir les autorisations appropriées pour la base de données
+echo "🔒 Définition des autorisations de la base de données..."
+sudo chown ec2-user:ec2-user honeypot_attacks.db* 2>/dev/null || true
+sudo chmod 664 honeypot_attacks.db* 2>/dev/null || true
+
 # Redémarrer le service
 echo "🔄 Redémarrage du service..."
 sudo systemctl restart internet-is-nasty
