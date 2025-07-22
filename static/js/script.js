@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
+    // Security function to escape HTML and prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     const totalThreatsCount = document.getElementById('total-threats-count');
     const attackEntries = document.getElementById('attack-entries');
     const refreshHistoryBtn = document.getElementById('refresh-history');
@@ -75,12 +82,27 @@ document.addEventListener('DOMContentLoaded', () => {
             entry.className = 'attack-entry';
             if (index === 0) entry.classList.add('new-entry');
             
-            entry.innerHTML = `
-                <div style="color: #4ecdc4;">${formatTime(attack.timestamp)}</div>
-                <div style="color: #ff9500;">${attack.ip}</div>
-                <div style="color: #ff6b6b;">${attack.port}</div>
-                <div style="color: #a8e6cf;">${attack.port_name}</div>
-            `;
+            // Create elements safely to prevent XSS
+            const timeDiv = document.createElement('div');
+            timeDiv.style.color = '#4ecdc4';
+            timeDiv.textContent = formatTime(attack.timestamp);
+            
+            const ipDiv = document.createElement('div');
+            ipDiv.style.color = '#ff9500';
+            ipDiv.textContent = escapeHtml(attack.ip);
+            
+            const portDiv = document.createElement('div');
+            portDiv.style.color = '#ff6b6b';
+            portDiv.textContent = attack.port;
+            
+            const serviceDiv = document.createElement('div');
+            serviceDiv.style.color = '#a8e6cf';
+            serviceDiv.textContent = escapeHtml(attack.port_name);
+            
+            entry.appendChild(timeDiv);
+            entry.appendChild(ipDiv);
+            entry.appendChild(portDiv);
+            entry.appendChild(serviceDiv);
             
             attackEntries.appendChild(entry);
         });
