@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('connect', () => {
         console.log('Successfully connected to the real-time threat server.');
+        // Load initial data when connected
+        loadDailyStats();
+        loadRecentAttacks();
     });
 
     socket.on('disconnect', () => {
@@ -125,10 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
             23: 'TELNET',
             25: 'SMTP',
             53: 'DNS',
-            80: 'HTTP',
             110: 'POP3',
+            135: 'RPC',
+            139: 'NetBIOS',
             143: 'IMAP',
-            443: 'HTTPS',
+            445: 'SMB',
             993: 'IMAPS',
             995: 'POP3S',
             1433: 'MSSQL',
@@ -169,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 // Reset counters for ports with no attacks today
-                const allPorts = [22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 1433, 3306, 3389, 5900, 8080];
+                const allPorts = [22, 23, 25, 53, 110, 135, 139, 143, 445, 993, 995, 1433, 3306, 3389, 5900, 8080];
                 allPorts.forEach(port => {
                     if (!stats[port]) {
                         const portCountElement = document.getElementById(`count-${port}`);
