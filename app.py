@@ -159,10 +159,32 @@ def get_recent_attacks(limit=50):
         
         attacks = []
         for port, ip, timestamp in cursor.fetchall():
+            # Convert timestamp to UTC ISO format for consistent client-side handling
+            try:
+                # Parse the timestamp from database (Paris timezone)
+                if isinstance(timestamp, str):
+                    # If it's a string, parse it assuming Paris timezone
+                    dt_paris = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    if dt_paris.tzinfo is None:
+                        dt_paris = PARIS_TZ.localize(dt_paris)
+                else:
+                    # If it's already a datetime object
+                    dt_paris = timestamp
+                    if dt_paris.tzinfo is None:
+                        dt_paris = PARIS_TZ.localize(dt_paris)
+                
+                # Convert to UTC and format as ISO
+                dt_utc = dt_paris.astimezone(pytz.UTC)
+                timestamp_iso = dt_utc.isoformat().replace('+00:00', 'Z')
+            except Exception as e:
+                logger.warning(f"Error converting timestamp {timestamp}: {e}")
+                # Fallback to original timestamp
+                timestamp_iso = str(timestamp)
+            
             attacks.append({
                 'port': port,
                 'ip': ip,
-                'timestamp': timestamp,
+                'timestamp': timestamp_iso,
                 'port_name': PORTS_TO_MONITOR.get(port, {}).get('name', 'Unknown')
             })
             
@@ -237,7 +259,8 @@ def listen_on_port(port):
                     with conn:
                         # addr[0] is the IP address of the client
                         attacker_ip = addr[0]
-                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        # Use UTC timestamp in ISO format for proper client-side conversion
+                        timestamp = datetime.utcnow().isoformat() + 'Z'
                         
                         logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
 
