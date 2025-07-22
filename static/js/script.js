@@ -1,13 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
-    // Security function to escape HTML and prevent XSS
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     const totalThreatsCount = document.getElementById('total-threats-count');
     const attackEntries = document.getElementById('attack-entries');
     const refreshHistoryBtn = document.getElementById('refresh-history');
@@ -43,9 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('connect', () => {
         console.log('Successfully connected to the real-time threat server.');
-        // Load initial data when connected
-        loadDailyStats();
-        loadRecentAttacks();
     });
 
     socket.on('disconnect', () => {
@@ -85,27 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
             entry.className = 'attack-entry';
             if (index === 0) entry.classList.add('new-entry');
             
-            // Create elements safely to prevent XSS
-            const timeDiv = document.createElement('div');
-            timeDiv.style.color = '#4ecdc4';
-            timeDiv.textContent = formatTime(attack.timestamp);
-            
-            const ipDiv = document.createElement('div');
-            ipDiv.style.color = '#ff9500';
-            ipDiv.textContent = escapeHtml(attack.ip);
-            
-            const portDiv = document.createElement('div');
-            portDiv.style.color = '#ff6b6b';
-            portDiv.textContent = attack.port;
-            
-            const serviceDiv = document.createElement('div');
-            serviceDiv.style.color = '#a8e6cf';
-            serviceDiv.textContent = escapeHtml(attack.port_name);
-            
-            entry.appendChild(timeDiv);
-            entry.appendChild(ipDiv);
-            entry.appendChild(portDiv);
-            entry.appendChild(serviceDiv);
+            entry.innerHTML = `
+                <div style="color: #4ecdc4;">${formatTime(attack.timestamp)}</div>
+                <div style="color: #ff9500;">${attack.ip}</div>
+                <div style="color: #ff6b6b;">${attack.port}</div>
+                <div style="color: #a8e6cf;">${attack.port_name}</div>
+            `;
             
             attackEntries.appendChild(entry);
         });
@@ -128,11 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
             23: 'TELNET',
             25: 'SMTP',
             53: 'DNS',
+            80: 'HTTP',
             110: 'POP3',
-            135: 'RPC',
-            139: 'NetBIOS',
             143: 'IMAP',
-            445: 'SMB',
+            443: 'HTTPS',
             993: 'IMAPS',
             995: 'POP3S',
             1433: 'MSSQL',
@@ -173,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 // Reset counters for ports with no attacks today
-                const allPorts = [22, 23, 25, 53, 110, 135, 139, 143, 445, 993, 995, 1433, 3306, 3389, 5900, 8080];
+                const allPorts = [22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 1433, 3306, 3389, 5900, 8080];
                 allPorts.forEach(port => {
                     if (!stats[port]) {
                         const portCountElement = document.getElementById(`count-${port}`);

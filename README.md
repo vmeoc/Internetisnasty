@@ -62,19 +62,6 @@ This project creates an educational cybersecurity demonstration showing how inte
 - **Service Management**: `sudo systemctl restart internet-is-nasty`
 - **Live Logs**: `sudo journalctl -u internet-is-nasty -f`
 
-### Step 5: Enable HTTPS (Optional but Recommended)
-1. **Point your domain to the Lightsail IP**
-2. **Add HTTPS port to firewall:**
-   ```
-   HTTPS (443) - TCP - Anywhere (0.0.0.0/0)
-   ```
-3. **Run HTTPS setup script:**
-   ```bash
-   chmod +x enable-https.sh
-   ./enable-https.sh your-domain.com
-   ```
-4. **Access via HTTPS:** `https://your-domain.com`
-
 ## 🔧 Management Commands
 
 ### Service Control
@@ -97,24 +84,6 @@ sudo systemctl stop internet-is-nasty
 # Update to latest version
 cd /home/ec2-user/Internetisnasty
 ./update.sh
-```
-
-### HTTPS Management
-```bash
-# Check SSL certificate status
-sudo certbot certificates
-
-# Test certificate renewal
-sudo certbot renew --dry-run
-
-# Force certificate renewal
-sudo certbot renew --force-renewal
-
-# Check renewal timer status
-sudo systemctl status certbot-renew.timer
-
-# View renewal logs
-sudo journalctl -u certbot-renew.service
 ```
 
 ## 🔍 Local Development
@@ -170,9 +139,6 @@ python app.py
 - **Secure Database**: SQLite with proper file permissions
 - **Firewall Ready**: Works with AWS Lightsail firewall
 - **Root Privileges**: Required for privileged ports (< 1024)
-- **HTTPS Support**: Optional SSL/TLS encryption with Let's Encrypt
-- **Auto-Renewal**: SSL certificates automatically renewed daily
-- **Security Headers**: XSS, CSRF, and clickjacking protection enabled
 
 ## 🐛 Troubleshooting
 
@@ -211,7 +177,6 @@ Internetisnasty/
 ├── requirements.txt       # Python dependencies
 ├── deploy-lightsail.sh    # Deployment script
 ├── update.sh             # Update script
-├── enable-https.sh       # HTTPS setup script
 ├── templates/
 │   └── index.html        # Web dashboard
 ├── static/

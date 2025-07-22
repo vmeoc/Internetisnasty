@@ -32,26 +32,10 @@ sys.stdout.reconfigure(line_buffering=True)
 
 # --- Application Setup ---
 app = Flask(__name__)
-# Generate a secure secret key from environment or use a secure random key
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', os.urandom(32).hex())
-
-# Security headers
-@app.after_request
-def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' ws: wss:; object-src 'none'"
-    return response
-
+# Using a secret key is a security best practice for Flask applications
+app.config['SECRET_KEY'] = 'secret!change_me_in_production'
 # Initialize SocketIO with the Flask app, using eventlet for the async server
-# Enable CORS and configure for production
-socketio = SocketIO(app, 
-                   async_mode='eventlet',
-                   cors_allowed_origins="*",
-                   logger=True,
-                   engineio_logger=True)
+socketio = SocketIO(app, async_mode='eventlet')
 
 # --- Port Monitoring Configuration ---
 # Dictionary of ports to monitor with their descriptions
@@ -77,28 +61,6 @@ PORTS_TO_MONITOR = {
 # --- Database Configuration ---
 DB_PATH = 'honeypot_attacks.db'
 PARIS_TZ = pytz.timezone('Europe/Paris')
-
-# --- Rate Limiting ---
-from collections import defaultdict, deque
-ip_request_times = defaultdict(deque)
-RATE_LIMIT_WINDOW = 60  # 60 seconds
-MAX_REQUESTS_PER_IP = 100  # Max 100 connections per IP per minute
-
-def is_rate_limited(ip_address):
-    """Check if IP is rate limited"""
-    now = time.time()
-    
-    # Clean old entries
-    while ip_request_times[ip_address] and ip_request_times[ip_address][0] < now - RATE_LIMIT_WINDOW:
-        ip_request_times[ip_address].popleft()
-    
-    # Check if rate limit exceeded
-    if len(ip_request_times[ip_address]) >= MAX_REQUESTS_PER_IP:
-        return True
-    
-    # Add current request
-    ip_request_times[ip_address].append(now)
-    return False
 
 def init_database():
     """Initialize SQLite database with required tables"""
@@ -260,13 +222,11 @@ def listen_on_port(port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # Set the socket to be reusable to avoid "Address already in use" errors
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            # Set socket timeout to prevent hanging connections
-            s.settimeout(5.0)
             
             # Bind the socket to all available network interfaces ('0.0.0.0') on the specified port
             s.bind(('0.0.0.0', port))
-            # Start listening for incoming connections with limited backlog
-            s.listen(5)
+            # Start listening for incoming connections
+            s.listen()
             logger.info(f"Successfully listening on port {port} ({PORTS_TO_MONITOR[port]['name']})")
 
             # Loop forever to accept all incoming connection attempts
@@ -274,48 +234,24 @@ def listen_on_port(port):
                 try:
                     # Accept a new connection. This is a blocking call.
                     conn, addr = s.accept()
-                    
-                    # IMMEDIATELY log the attack (before any timeout can occur)
-                    attacker_ip = addr[0]
-                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    
-                    # Check rate limiting
-                    if is_rate_limited(attacker_ip):
-                        logger.warning(f"RATE LIMITED: {attacker_ip} on port {port} (too many requests)")
-                        conn.close()
-                        continue
-                    
-                    logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
-
-                    # Log attack to database
-                    log_attack_to_db(port, attacker_ip)
-
-                    # Prepare the data to be sent to the frontend
-                    data = {
-                        'port': port,
-                        'ip': attacker_ip,
-                        'timestamp': timestamp,
-                        'port_name': PORTS_TO_MONITOR[port]['name']
-                    }
-                    logger.debug(f"Prepared data for frontend: {data}")
-                    # Emit a 'new_connection' event over the WebSocket (thread-safe)
-                    try:
-                        socketio.emit('new_connection', data, namespace='/')
-                        logger.debug(f"SocketIO event emitted for {attacker_ip}:{port}")
-                    except Exception as e:
-                        logger.error(f"SocketIO emit failed: {e}")
-                    
-                    # Now set timeout and close connection quickly
-                    conn.settimeout(1.0)
                     with conn:
-                        # Just close the connection immediately after logging
-                        pass
-                except socket.timeout:
-                    # This is normal - connection timed out (security feature)
-                    logger.debug(f"Connection timeout on port {port} (normal honeypot behavior)")
-                except ConnectionResetError:
-                    # Client disconnected abruptly - normal for port scanning
-                    logger.debug(f"Connection reset on port {port} (normal scanning behavior)")
+                        # addr[0] is the IP address of the client
+                        attacker_ip = addr[0]
+                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        
+                        logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
+
+                        # Log attack to database
+                        log_attack_to_db(port, attacker_ip)
+
+                        # Prepare the data to be sent to the frontend
+                        data = {
+                            'port': port,
+                            'ip': attacker_ip,
+                            'timestamp': timestamp
+                        }
+                        # Emit a 'new_connection' event over the WebSocket
+                        socketio.emit('new_connection', data)
                 except Exception as e:
                     logger.error(f"Error accepting connection on port {port}: {e}")
     except OSError as e:
@@ -389,32 +325,9 @@ if __name__ == '__main__':
     # Start the Flask-SocketIO server
     # We use socketio.run instead of app.run to enable WebSocket support
     # Disable use_reloader to prevent thread conflicts
-    logger.info(f"Starting Flask-SocketIO web server")
-    
-    # Check for SSL certificates
-    ssl_cert = os.environ.get('SSL_CERT_PATH', '/etc/letsencrypt/live/your-domain/fullchain.pem')
-    ssl_key = os.environ.get('SSL_KEY_PATH', '/etc/letsencrypt/live/your-domain/privkey.pem')
-    
-    # Start the Flask-SocketIO server
     logger.info(f"Starting Flask-SocketIO web server on port {port}")
+    logger.info("Honeypot is now active and monitoring for threats!")
     
     # Use debug=True for local development, False for production
     is_production = os.environ.get('LIGHTSAIL_PRODUCTION', 'false').lower() == 'true'
-    
-    # Check if SSL certificates exist
-    if os.path.exists(ssl_cert) and os.path.exists(ssl_key) and is_production:
-        logger.info("🔒 Starting HTTPS server with SSL certificates")
-        socketio.run(app, 
-                    host='0.0.0.0', 
-                    port=port, 
-                    debug=not is_production, 
-                    use_reloader=False,
-                    ssl_context=(ssl_cert, ssl_key))
-    else:
-        if is_production:
-            logger.warning("⚠️ SSL certificates not found, starting HTTP server")
-            logger.warning(f"Expected cert: {ssl_cert}")
-            logger.warning(f"Expected key: {ssl_key}")
-        logger.info("🌐 Starting HTTP server")
-        logger.info("Honeypot is now active and monitoring for threats!")
-        socketio.run(app, host='0.0.0.0', port=port, debug=not is_production, use_reloader=False)
+    socketio.run(app, host='0.0.0.0', port=port, debug=not is_production, use_reloader=False)

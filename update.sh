@@ -42,7 +42,5 @@ echo "✅ Checking service status..."
 sleep 2
 sudo systemctl status internet-is-nasty --no-pager
 
-echo "✅ Update completed!"
-echo "📍 Database location: $(pwd)/honeypot_attacks.db"
-echo "📋 View logs: sudo journalctl -u internet-is-nasty -f"
-echo "🎯 Test attack logging: curl -s http://localhost/api/recent-attacks | head -20"
+echo "🎉 Update completed!"
+echo "📊 Logs in real-time: sudo journalctl -u internet-is-nasty -f"
