@@ -26,6 +26,7 @@
                 <div class="info-card">
                     <h4>📚 What am I seeing?</h4>
                     <p>Each square represents a "network port" (like a <em>door</em>) that hackers try to break into. Every flash = another attack attempt!</p>
+                    <p><strong>🔄 Data resets daily at midnight (Paris time)</strong></p>
                     
                     <div class="legend">
                         <div class="legend-item">
@@ -57,6 +58,7 @@
             <!-- Center: Port Grid -->
             <main class="ports-grid">
                 <h3>🚪 Network Ports Under Attack</h3>
+                <p class="ports-explanation">📊 The <strong style="color: #ffe66d;">yellow number</strong> shows connection attempts since start of day</p>
                 <div id="threat-grid">
                     {% for port, details in ports.items() %}
                     <div class="threat-card compact" id="port-{{ port }}">

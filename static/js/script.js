@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             entry.innerHTML = `
                 <div style="color: #4ecdc4;">${formatTime(attack.timestamp)}</div>
-                <div style="color: #ffe66d;">${attack.ip}</div>
+                <div style="color: #ff9500;">${attack.ip}</div>
                 <div style="color: #ff6b6b;">${attack.port}</div>
                 <div style="color: #a8e6cf;">${attack.port_name}</div>
             `;
@@ -88,10 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatTime(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleTimeString('fr-FR', {
+        // Use user's browser timezone instead of forcing French time
+        return date.toLocaleTimeString(navigator.language || 'en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
+            hour12: false
         });
     }
 

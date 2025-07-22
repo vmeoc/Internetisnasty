@@ -31,10 +31,12 @@ body {
 
 .title {
     font-family: 'Creepster', cursive;
-    font-size: 3rem;
+    font-size: 4.5rem;
     color: #ff6b6b;
     text-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
     margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+    word-spacing: 0.2em;
 }
 
 .flicker {
@@ -72,11 +74,29 @@ body {
     gap: 1rem;
 }
 
-.stats-card, .info-card, .controls-card {
+.stats-card, .controls-card {
     background: rgba(30, 30, 30, 0.9);
     border-radius: 12px;
     padding: 1.5rem;
     border: 1px solid #333;
+}
+
+.info-card {
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(30, 30, 30, 0.9));
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid #ff6b6b;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+    }
 }
 
 .stats-card h3, .info-card h4, .controls-card h4 {
@@ -180,6 +200,17 @@ body {
     margin-bottom: 1rem;
     text-align: center;
     font-size: 1.2rem;
+}
+
+.ports-explanation {
+    text-align: center;
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(255, 230, 109, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 230, 109, 0.3);
 }
 
 #threat-grid {
