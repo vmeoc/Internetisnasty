@@ -1,41 +1,41 @@
 #!/bin/bash
 
-# Script de déploiement pour AWS Lightsail - Amazon Linux 2023
-# À exécuter SUR la VM Lightsail après création
+# Deployment script for AWS Lightsail - Amazon Linux 2023
+# Run this ON the Lightsail VM after creation
 
-echo "🚀 Déploiement d'Internet is Nasty sur AWS Lightsail (Amazon Linux 2023)..."
+echo "🚀 Deploying Internet is Nasty on AWS Lightsail (Amazon Linux 2023)..."
 
-# Mise à jour du système
-echo "📦 Mise à jour du système..."
+# System update
+echo "📦 Updating system..."
 sudo dnf update -y
 
-# Installation de Python et pip
-echo "[*] Installing required packages..."
+# Install required packages
+echo "🔧 Installing required packages..."
 sudo dnf update -y
 sudo dnf install -y python3 python3-pip git sqlite libcap
 
-# Clonage du repository
-echo "📥 Clonage du repository..."
+# Clone repository
+echo "📥 Cloning repository..."
 cd /home/ec2-user
 git clone https://github.com/vmeoc/Internetisnasty.git
 cd Internetisnasty
 
-# Création de l'environnement virtuel
-echo "🔧 Configuration de l'environnement Python..."
+# Create virtual environment
+echo "🔧 Setting up Python environment..."
 python3 -m venv venv
 source venv/bin/activate
 
-# Installation des dépendances
-echo "📚 Installation des dépendances..."
+# Install dependencies
+echo "📚 Installing dependencies..."
 pip install -r requirements.txt
 
-# Configuration des permissions pour les ports privilégiés
-echo "🔐 Configuration des permissions..."
-# Pour les ports privilégiés, on utilisera sudo dans le service systemd
-echo "Les ports privilégiés seront gérés via sudo dans le service systemd"
+# Configure permissions for privileged ports
+echo "🔐 Configuring permissions..."
+# For privileged ports, we'll use sudo in the systemd service
+echo "Privileged ports will be managed via sudo in systemd service"
 
-# Création du service systemd
-echo "⚙️ Création du service systemd..."
+# Create systemd service
+echo "⚙️ Creating systemd service..."
 sudo tee /etc/systemd/system/internet-is-nasty.service > /dev/null <<EOF
 [Unit]
 Description=Internet is Nasty Honeypot
@@ -58,26 +58,26 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-# Activation et démarrage du service
-echo "🔄 Activation du service..."
+# Enable and start service
+echo "🔄 Enabling service..."
 sudo systemctl daemon-reload
 sudo systemctl enable internet-is-nasty
 sudo systemctl start internet-is-nasty
 
-# Configuration du firewall
-echo "🔥 Configuration du firewall..."
-echo "ℹ️  AWS Lightsail gère le firewall au niveau infrastructure."
-echo "🔧 Configurez les ports dans la console Lightsail :"
-echo "   - Allez dans Lightsail Console > Votre instance > Networking > Firewall"
-echo "   - Ajoutez ces ports : 80,22,23,25,53,110,135,139,143,445,993,995,1433,3306,3389,5900,8080"
+# Firewall configuration
+echo "🔥 Firewall configuration..."
+echo "ℹ️  AWS Lightsail manages firewall at infrastructure level."
+echo "🔧 Configure ports in Lightsail console:"
+echo "   - Go to Lightsail Console > Your instance > Networking > Firewall"
+echo "   - Add these ports: 80,22,23,25,53,110,135,139,143,445,993,995,1433,3306,3389,5900,8080"
 echo "   - Type: TCP, Source: Anywhere (0.0.0.0/0)"
-echo "✅ Pas de firewall local nécessaire sur la VM !"
+echo "✅ No local firewall needed on the VM!"
 
-echo "✅ Déploiement terminé !"
-echo "🌐 Votre honeypot est accessible sur : http://VOTRE_IP_LIGHTSAIL"
-echo "📊 Status du service : sudo systemctl status internet-is-nasty"
-echo "📋 Logs en temps réel : sudo journalctl -u internet-is-nasty -f"
+echo "✅ Deployment completed!"
+echo "🌐 Your honeypot is accessible at: http://YOUR_LIGHTSAIL_IP"
+echo "📊 Service status: sudo systemctl status internet-is-nasty"
+echo "📋 Real-time logs: sudo journalctl -u internet-is-nasty -f"
 echo ""
-echo "✅ CONFIGURATION SSH :"
-echo "   Si vous avez déplacé SSH sur un autre port, le honeypot peut maintenant"
-echo "   surveiller le port 22 et capturer les tentatives d'intrusion SSH !"
+echo "✅ SSH CONFIGURATION:"
+echo "   If you moved SSH to another port, the honeypot can now"
+echo "   monitor port 22 and capture SSH intrusion attempts!"

@@ -1,84 +1,198 @@
-# Internet is Nasty
+# Internet is Nasty 🛡️
 
-A horror-themed web application that visualizes real-time connection attempts to common network ports on a server.
+A horror-themed cybersecurity honeypot that visualizes real-time connection attempts and attacks on common network ports.
 
-## Overview
+## 🎯 Overview
 
-This project consists of two main parts:
+This project creates an educational cybersecurity demonstration showing how internet-facing servers are constantly under attack. It consists of:
 
-1.  **A Python Backend**: Built with Flask, it serves the frontend application and listens on a list of common network ports (e.g., 21, 22, 80, 445).
-2.  **A Web Frontend**: A single-page interface styled like a horror movie computer terminal. It uses WebSockets to receive real-time data from the backend every time a connection attempt is detected on one of the monitored ports.
+1. **Python Backend**: Flask-based honeypot listening on multiple ports (22, 23, 25, 53, 80, 110, etc.)
+2. **Web Dashboard**: Real-time visualization of attacks with horror-themed UI
+3. **SQLite Persistence**: Attack logging with daily statistics and reset functionality
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-*   **Backend**: Python, Flask, Flask-SocketIO
-*   **Frontend**: HTML, CSS, JavaScript, Socket.IO Client
+- **Backend**: Python, Flask, Flask-SocketIO, SQLite
+- **Frontend**: HTML5, CSS3, JavaScript, Socket.IO
+- **Deployment**: AWS Lightsail, systemd service
+- **Monitoring**: journalctl logging
 
-## Local Development Setup
-
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd Internetisnasty
-    ```
-
-2.  **Create and activate a virtual environment:**
-    ```bash
-    # For Windows
-    python -m venv venv
-    .\venv\Scripts\activate
-
-    # For macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-
-3.  **Install the dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Run the application:**
-    ```bash
-    python app.py
-    ```
-    The application will be available at `http://127.0.0.1:5000`.
-
-## AWS Deployment Guide (Using Elastic Beanstalk)
-
-Deploying this application to a public server is what makes it interesting. AWS Elastic Beanstalk is a straightforward way to get it running.
+## 🚀 AWS Lightsail Deployment
 
 ### Prerequisites
+- AWS Lightsail instance (Ubuntu 20.04+ or Amazon Linux 2023)
+- SSH access to your instance
+- Domain/IP for public access
 
-*   An AWS Account.
-*   [AWS CLI](https://aws.amazon.com/cli/) installed and configured on your machine.
+### Step 1: Create Lightsail Instance
+1. Go to [AWS Lightsail Console](https://lightsail.aws.amazon.com/)
+2. Create instance:
+   - **Platform**: Linux/Unix
+   - **Blueprint**: Amazon Linux 2023 or Ubuntu 20.04+
+   - **Instance plan**: $5/month minimum (1GB RAM)
+   - **Instance name**: `internet-is-nasty-honeypot`
 
-### Deployment Steps
+### Step 2: Configure Networking
+1. In Lightsail console, go to **Networking** tab
+2. Add firewall rules for these ports:
+   ```
+   HTTP (80) - TCP - Anywhere (0.0.0.0/0)
+   SSH (22) - TCP - Your IP only (for management)
+   Custom (23,25,53,110,135,139,143,445,993,995,1433,3306,3389,5900,8080) - TCP - Anywhere
+   ```
 
-1.  **Prepare the Application Bundle**:
-    Create a `.zip` file containing all the project files (`app.py`, `requirements.txt`, `templates/`, `static/`). Do **not** include the `venv` directory.
+### Step 3: Deploy Application
+1. **SSH into your instance:**
+   ```bash
+   ssh -i your-key.pem ec2-user@YOUR_LIGHTSAIL_IP
+   ```
 
-2.  **Create an Elastic Beanstalk Application**:
-    Navigate to the Elastic Beanstalk service in the AWS Management Console.
-    *   Click **"Create Application"**.
-    *   Enter an application name (e.g., `internet-is-nasty`).
-    *   Under **"Platform"**, select **Python**.
-    *   For **"Application code"**, choose **"Upload your code"** and select the `.zip` file you created.
+2. **Run deployment script:**
+   ```bash
+   curl -sSL https://raw.githubusercontent.com/vmeoc/Internetisnasty/main/deploy-lightsail.sh | bash
+   ```
 
-3.  **Configure Environment and Launch**:
-    *   Let Elastic Beanstalk create a new environment for you.
-    *   Review the settings and click **"Create application"**. AWS will provision the necessary resources (like an EC2 instance) and deploy your code.
+3. **Verify deployment:**
+   ```bash
+   sudo systemctl status internet-is-nasty
+   ```
 
-4.  **Configure the Security Group**:
-    **This is a critical step for the application to work.** The server needs to accept traffic on the ports it's monitoring.
-    *   Navigate to the **EC2 service** in the AWS Console.
-    *   Find the instance that was created by Elastic Beanstalk.
-    *   Go to the **"Security"** tab and click on the security group associated with the instance.
-    *   Click **"Edit inbound rules"**.
-    *   For each port you are monitoring (e.g., 21, 22, 23, 80, 445, etc.), add a new rule:
-        *   **Type**: Custom TCP
-        *   **Port Range**: The port number (e.g., `21`)
-        *   **Source**: Anywhere-IPv4 (`0.0.0.0/0`)
-    *   Save the rules.
+### Step 4: Access Your Honeypot
+- **Web Interface**: `http://YOUR_LIGHTSAIL_IP`
+- **Service Management**: `sudo systemctl restart internet-is-nasty`
+- **Live Logs**: `sudo journalctl -u internet-is-nasty -f`
 
-Once deployed, Elastic Beanstalk will provide you with a public URL where you can see your application live and watch the connection attempts roll in.
+## 🔧 Management Commands
+
+### Service Control
+```bash
+# Restart the application
+sudo systemctl restart internet-is-nasty
+
+# Check service status
+sudo systemctl status internet-is-nasty
+
+# View real-time logs
+sudo journalctl -u internet-is-nasty -f
+
+# Stop the service
+sudo systemctl stop internet-is-nasty
+```
+
+### Updates
+```bash
+# Update to latest version
+cd /home/ec2-user/Internetisnasty
+./update.sh
+```
+
+## 🔍 Local Development
+
+### Setup
+```bash
+# Clone repository
+git clone https://github.com/vmeoc/Internetisnasty.git
+cd Internetisnasty
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run locally (development mode)
+python app.py
+```
+
+### Local Testing
+- Access: `http://localhost:5000`
+- Limited port access (no privileged ports < 1024)
+- SQLite database: `honeypot_attacks.db`
+
+## 📊 Features
+
+### Real-time Monitoring
+- **Port Scanning Detection**: Monitors 17+ common ports
+- **Live Attack Feed**: Real-time display of connection attempts
+- **Geographic Tracking**: Shows attacker IP addresses
+- **Service Identification**: Identifies targeted services (SSH, HTTP, etc.)
+
+### Data Persistence
+- **SQLite Database**: Stores all attack data
+- **Daily Statistics**: Tracks daily attack counts
+- **Automatic Reset**: Daily counter reset at midnight (Paris time)
+- **Attack History**: Recent attacks with timestamps
+
+### Dashboard Features
+- **Port Grid**: Visual representation of monitored ports
+- **Connection Counters**: Shows attempts per port since midnight
+- **Live Feed**: Scrolling list of recent attacks
+- **Educational Content**: Explains what users are seeing
+
+## 🔒 Security Notes
+
+- **Honeypot Nature**: Designed to attract and log attacks
+- **No Data Execution**: Only logs connection attempts
+- **Secure Database**: SQLite with proper file permissions
+- **Firewall Ready**: Works with AWS Lightsail firewall
+- **Root Privileges**: Required for privileged ports (< 1024)
+
+## 🐛 Troubleshooting
+
+### Common Issues
+```bash
+# Service won't start
+sudo journalctl -u internet-is-nasty -n 50
+
+# Port conflicts
+sudo netstat -tulpn | grep :80
+
+# Permission errors
+sudo chown ec2-user:ec2-user /home/ec2-user/Internetisnasty/honeypot_attacks.db
+sudo chmod 600 /home/ec2-user/Internetisnasty/honeypot_attacks.db
+
+# Database issues
+sudo systemctl restart internet-is-nasty
+```
+
+### Log Analysis
+```bash
+# Real-time monitoring
+sudo journalctl -u internet-is-nasty -f
+
+# Recent errors
+sudo journalctl -u internet-is-nasty -p err -n 20
+
+# Service restart history
+sudo journalctl -u internet-is-nasty --since "1 hour ago"
+```
+
+## 📝 File Structure
+```
+Internetisnasty/
+├── app.py                 # Main Flask application
+├── requirements.txt       # Python dependencies
+├── deploy-lightsail.sh    # Deployment script
+├── update.sh             # Update script
+├── templates/
+│   └── index.html        # Web dashboard
+├── static/
+│   ├── css/style.css     # Styling
+│   └── js/script.js      # Frontend logic
+└── honeypot_attacks.db   # SQLite database (created on first run)
+```
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Test your changes
+4. Submit a pull request
+
+## 📄 License
+
+MIT License - see LICENSE file for details.

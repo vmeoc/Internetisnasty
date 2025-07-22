@@ -1,46 +1,46 @@
 #!/bin/bash
 
-# Script de mise à jour pour Internet is Nasty sur Lightsail - Amazon Linux 2023
-# À exécuter sur la VM pour mettre à jour le code
+# Update script for Internet is Nasty on Lightsail - Amazon Linux 2023
+# Run this on the VM to update the code
 
-echo "🔄 Mise à jour d'Internet is Nasty..."
+echo "🔄 Updating Internet is Nasty..."
 
 cd /home/ec2-user/Internetisnasty
 
-# Sauvegarder les changements locaux si nécessaire
+# Stash local changes if necessary
 git stash
 
-# Récupérer les dernières modifications
-echo "📥 Récupération des dernières modifications..."
+# Pull latest changes
+echo "📥 Pulling latest changes..."
 git pull origin main
 
-# Restaurer les changements locaux si nécessaire
+# Restore local changes if necessary
 git stash pop 2>/dev/null || true
 
-# Mettre à jour les dépendances si nécessaire
-echo "📚 Vérification des dépendances..."
+# Update dependencies if necessary
+echo "📚 Checking dependencies..."
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Créer une sauvegarde de la base de données si elle existe
+# Create database backup if it exists
 if [ -f "honeypot_attacks.db" ]; then
-    echo "📦 Création d'une sauvegarde de la base de données..."
+    echo "📦 Creating database backup..."
     cp honeypot_attacks.db "honeypot_attacks.db.backup.$(date +%Y%m%d_%H%M%S)"
 fi
 
-# Définir les autorisations appropriées pour la base de données
-echo "🔒 Définition des autorisations de la base de données..."
+# Set proper database permissions
+echo "🔒 Setting database permissions..."
 sudo chown ec2-user:ec2-user honeypot_attacks.db* 2>/dev/null || true
 sudo chmod 664 honeypot_attacks.db* 2>/dev/null || true
 
-# Redémarrer le service
-echo "🔄 Redémarrage du service..."
+# Restart the service
+echo "🔄 Restarting service..."
 sudo systemctl restart internet-is-nasty
 
-# Vérifier le statut
-echo "✅ Vérification du statut..."
+# Check service status
+echo "✅ Checking service status..."
 sleep 2
 sudo systemctl status internet-is-nasty --no-pager
 
-echo "🎉 Mise à jour terminée !"
-echo "📊 Logs en temps réel : sudo journalctl -u internet-is-nasty -f"
+echo "🎉 Update completed!"
+echo "📊 Logs in real-time: sudo journalctl -u internet-is-nasty -f"
