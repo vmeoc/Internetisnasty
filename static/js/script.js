@@ -124,6 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/stats')
             .then(response => response.json())
             .then(stats => {
+                // Reset total threats counter before updating
+                totalThreats = 0;
+                
                 // Update counters with current daily stats
                 Object.entries(stats).forEach(([port, count]) => {
                     const portCountElement = document.getElementById(`count-${port}`);
@@ -132,6 +135,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         totalThreats += count;
                     }
                 });
+                
+                // Reset counters for ports with no attacks today
+                const allPorts = [22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 1433, 3306, 3389, 5900, 8080];
+                allPorts.forEach(port => {
+                    if (!stats[port]) {
+                        const portCountElement = document.getElementById(`count-${port}`);
+                        if (portCountElement) {
+                            portCountElement.textContent = '0';
+                        }
+                    }
+                });
+                
                 totalThreatsCount.textContent = totalThreats;
             })
             .catch(error => {
