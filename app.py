@@ -330,4 +330,19 @@ if __name__ == '__main__':
     
     # Use debug=True for local development, False for production
     is_production = os.environ.get('LIGHTSAIL_PRODUCTION', 'false').lower() == 'true'
-    socketio.run(app, host='0.0.0.0', port=port, debug=not is_production, use_reloader=False)
+    
+    # Check for SSL configuration
+    ssl_cert_path = os.environ.get('SSL_CERT_PATH')
+    ssl_key_path = os.environ.get('SSL_KEY_PATH')
+    
+    if ssl_cert_path and ssl_key_path:
+        # HTTPS mode with SSL certificates
+        logger.info(f"Starting HTTPS server with SSL certificates")
+        logger.info(f"SSL Certificate: {ssl_cert_path}")
+        logger.info(f"SSL Key: {ssl_key_path}")
+        socketio.run(app, host='0.0.0.0', port=port, debug=not is_production, use_reloader=False,
+                    certfile=ssl_cert_path, keyfile=ssl_key_path)
+    else:
+        # HTTP mode (default)
+        logger.info(f"Starting HTTP server (no SSL)")
+        socketio.run(app, host='0.0.0.0', port=port, debug=not is_production, use_reloader=False)
