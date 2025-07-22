@@ -269,26 +269,42 @@ def listen_on_port(port):
                 try:
                     # Accept a new connection. This is a blocking call.
                     conn, addr = s.accept()
-                    # Set timeout on individual connections to prevent resource exhaustion
-                    conn.settimeout(2.0)
+                    
+                    # IMMEDIATELY log the attack (before any timeout can occur)
+                    attacker_ip = addr[0]
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    # Check rate limiting
+                    if is_rate_limited(attacker_ip):
+                        logger.warning(f"RATE LIMITED: {attacker_ip} on port {port} (too many requests)")
+                        conn.close()
+                        continue
+                    
+                    logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
+
+                    # Log attack to database
+                    log_attack_to_db(port, attacker_ip)
+
+                    # Prepare the data to be sent to the frontend
+                    data = {
+                        'port': port,
+                        'ip': attacker_ip,
+                        'timestamp': timestamp
+                    }
+                    # Emit a 'new_connection' event over the WebSocket
+                    socketio.emit('new_connection', data)
+                    
+                    # Now set timeout and close connection quickly
+                    conn.settimeout(1.0)
                     with conn:
-                        # addr[0] is the IP address of the client
-                        attacker_ip = addr[0]
-                        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        
-                        logger.warning(f"THREAT DETECTED: Connection from {attacker_ip} on port {port} ({PORTS_TO_MONITOR[port]['name']})")
-
-                        # Log attack to database
-                        log_attack_to_db(port, attacker_ip)
-
-                        # Prepare the data to be sent to the frontend
-                        data = {
-                            'port': port,
-                            'ip': attacker_ip,
-                            'timestamp': timestamp
-                        }
-                        # Emit a 'new_connection' event over the WebSocket
-                        socketio.emit('new_connection', data)
+                        # Just close the connection immediately after logging
+                        pass
+                except socket.timeout:
+                    # This is normal - connection timed out (security feature)
+                    logger.debug(f"Connection timeout on port {port} (normal honeypot behavior)")
+                except ConnectionResetError:
+                    # Client disconnected abruptly - normal for port scanning
+                    logger.debug(f"Connection reset on port {port} (normal scanning behavior)")
                 except Exception as e:
                     logger.error(f"Error accepting connection on port {port}: {e}")
     except OSError as e:
