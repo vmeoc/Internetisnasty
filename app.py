@@ -42,11 +42,16 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self'"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' ws: wss:; object-src 'none'"
     return response
 
 # Initialize SocketIO with the Flask app, using eventlet for the async server
-socketio = SocketIO(app, async_mode='eventlet')
+# Enable CORS and configure for production
+socketio = SocketIO(app, 
+                   async_mode='eventlet',
+                   cors_allowed_origins="*",
+                   logger=True,
+                   engineio_logger=True)
 
 # --- Port Monitoring Configuration ---
 # Dictionary of ports to monitor with their descriptions
@@ -289,10 +294,16 @@ def listen_on_port(port):
                     data = {
                         'port': port,
                         'ip': attacker_ip,
-                        'timestamp': timestamp
+                        'timestamp': timestamp,
+                        'port_name': PORTS_TO_MONITOR[port]['name']
                     }
-                    # Emit a 'new_connection' event over the WebSocket
-                    socketio.emit('new_connection', data)
+                    logger.debug(f"Prepared data for frontend: {data}")
+                    # Emit a 'new_connection' event over the WebSocket (thread-safe)
+                    try:
+                        socketio.emit('new_connection', data, namespace='/')
+                        logger.debug(f"SocketIO event emitted for {attacker_ip}:{port}")
+                    except Exception as e:
+                        logger.error(f"SocketIO emit failed: {e}")
                     
                     # Now set timeout and close connection quickly
                     conn.settimeout(1.0)
