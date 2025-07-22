@@ -25,11 +25,12 @@ sudo systemctl stop internet-is-nasty
 
 # Get SSL certificate using standalone mode
 echo "🔒 Obtaining SSL certificate from Let's Encrypt..."
+# Use a generic email to avoid domain-based email issues
 sudo certbot certonly --standalone \
     -d $DOMAIN \
     --non-interactive \
     --agree-tos \
-    --email admin@$DOMAIN
+    --email admin-1233235@gmail.com
 
 if [ $? -ne 0 ]; then
     echo "❌ Certificate generation failed!"
