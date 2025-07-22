@@ -10,59 +10,83 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header>
+    <div class="dashboard-container">
+        <!-- Top Header -->
+        <header class="main-header">
             <h1 class="title flicker">INTERNET IS NASTY</h1>
-            <p class="subtitle">
-                This is a <strong>real-time view</strong> of unsolicited connection attempts this server faces every second. 
-                Every flash is another random probe from the dark corners of the web.<br><br>
-                
-                <span class="explanation">📚 <strong>For non-network savvy people:</strong></span><br>
-                Each square below represents a "network port" (think of it as a <em>door</em>) to access an app running on a computer. 
-                These are the most common "doors" which get attacked constantly by bots crawling the Internet, trying to break in.<br><br>
-                
-                <span class="highlight">📊 You can see today's attack history below.</span><br>
-                <span class="warning">⚠️ Yes, the Internet is nasty!</span>
+            <p class="tagline">
+                🔴 <strong>Real-time cybersecurity honeypot</strong> - Watch hackers probe this server live!
             </p>
-            <div class="total-threats">
-                Total Threats Detected: <span id="total-threats-count">0</span>
-            </div>
         </header>
 
-        <main id="threat-grid">
-            {% for port, details in ports.items() %}
-            <div class="threat-card" id="port-{{ port }}">
-                <div class="port-number">{{ port }}</div>
-                <div class="port-details">
-                    <div class="port-name">{{ details.name }}</div>
-                    <div class="port-description">{{ details.description }}</div>
+        <!-- Dashboard Layout -->
+        <div class="dashboard-grid">
+            <!-- Left Panel: Stats & Info -->
+            <aside class="stats-panel">
+                <div class="stats-card">
+                    <h3>📊 Today's Threats</h3>
+                    <div class="total-counter">
+                        <span id="total-threats-count">0</span>
+                        <small>attacks detected</small>
+                    </div>
                 </div>
-                <div class="attack-info">
-                    <div class="attack-label">Attempts:</div>
-                    <div class="attack-count" id="count-{{ port }}">0</div>
+                
+                <div class="info-card">
+                    <h4>📚 What am I seeing?</h4>
+                    <p>Each square represents a "network port" (like a <em>door</em>) that hackers try to break into. Every flash = another attack attempt!</p>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <span class="legend-color flash"></span>
+                            <span>Live Attack</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color normal"></span>
+                            <span>Monitored Port</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
-        </main>
-        
-        <section class="attack-history">
-            <h2>Recent Attack History</h2>
-            <div class="history-controls">
-                <button id="refresh-history" class="btn">🔄 Refresh</button>
-                <button id="clear-history" class="btn">🗑️ Clear Display</button>
-            </div>
-            <div class="attack-log" id="attack-log">
-                <div class="log-header">
-                    <span>Time</span>
-                    <span>IP Address</span>
-                    <span>Port</span>
-                    <span>Service</span>
+                
+                <div class="controls-card">
+                    <h4>🔧 Controls</h4>
+                    <button id="refresh-history" class="btn btn-primary">🔄 Refresh Data</button>
+                    <button id="clear-history" class="btn btn-secondary">🗑️ Clear History</button>
                 </div>
-                <div id="attack-entries">
-                    <!-- Attack entries will be loaded here -->
+            </aside>
+
+            <!-- Center: Port Grid -->
+            <main class="ports-grid">
+                <h3>🚪 Network Ports Under Attack</h3>
+                <div id="threat-grid">
+                    {% for port, details in ports.items() %}
+                    <div class="threat-card compact" id="port-{{ port }}">
+                        <div class="port-number">{{ port }}</div>
+                        <div class="port-name">{{ details.name }}</div>
+                        <div class="attack-count" id="count-{{ port }}">0</div>
+                    </div>
+                    {% endfor %}
                 </div>
-            </div>
-        </section>
+            </main>
+
+            <!-- Right Panel: Live History -->
+            <aside class="history-panel">
+                <h3>📈 Live Attack Feed</h3>
+                <div class="attack-log compact" id="attack-log">
+                    <div id="attack-entries">
+                        <div class="no-attacks">
+                            🔍 Waiting for attacks...
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom: Status Bar -->
+        <footer class="status-bar">
+            <span class="status-item">🔍 Monitoring {{ ports|length }} ports</span>
+            <span class="status-item">🌍 Server location: AWS Lightsail</span>
+            <span class="status-item">⚠️ Internet is nasty!</span>
+        </footer>
     </div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>

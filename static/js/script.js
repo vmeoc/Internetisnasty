@@ -60,18 +60,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderAttackHistory() {
+        if (attackHistory.length === 0) {
+            attackEntries.innerHTML = '<div class="no-attacks">🔍 Waiting for attacks...</div>';
+            return;
+        }
+        
         attackEntries.innerHTML = '';
         
-        attackHistory.forEach((attack, index) => {
+        // Show only the most recent 20 attacks for the compact view
+        const recentAttacks = attackHistory.slice(0, 20);
+        
+        recentAttacks.forEach((attack, index) => {
             const entry = document.createElement('div');
             entry.className = 'attack-entry';
             if (index === 0) entry.classList.add('new-entry');
             
             entry.innerHTML = `
-                <div class="attack-time">${formatTime(attack.timestamp)}</div>
-                <div class="attack-ip">${attack.ip}</div>
-                <div class="attack-port">${attack.port}</div>
-                <div class="attack-service">${attack.port_name}</div>
+                <div><strong>${formatTime(attack.timestamp)}</strong></div>
+                <div style="color: #ffe66d;">${attack.ip}</div>
+                <div style="color: #ff6b6b;">Port ${attack.port}</div>
+                <div style="color: #a8e6cf;">${attack.port_name}</div>
             `;
             
             attackEntries.appendChild(entry);
