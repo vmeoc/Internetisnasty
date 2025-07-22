@@ -23,14 +23,6 @@
         <div class="dashboard-grid">
             <!-- Left Panel: Stats & Info -->
             <aside class="stats-panel">
-                <div class="stats-card">
-                    <h3>📊 Today's Threats</h3>
-                    <div class="total-counter">
-                        <span id="total-threats-count">0</span>
-                        <small>attacks detected</small>
-                    </div>
-                </div>
-                
                 <div class="info-card">
                     <h4>📚 What am I seeing?</h4>
                     <p>Each square represents a "network port" (like a <em>door</em>) that hackers try to break into. Every flash = another attack attempt!</p>
@@ -44,6 +36,14 @@
                             <span class="legend-color normal"></span>
                             <span>Monitored Port</span>
                         </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <h3>📊 Today's Threats</h3>
+                    <div class="total-counter">
+                        <span id="total-threats-count">0</span>
+                        <small>attacks detected</small>
                     </div>
                 </div>
                 
@@ -72,6 +72,12 @@
             <aside class="history-panel">
                 <h3>📈 Live Attack Feed</h3>
                 <div class="attack-log compact" id="attack-log">
+                    <div class="log-header">
+                        <span class="header-time">🕰️ Time</span>
+                        <span class="header-ip">🌍 Attacker IP</span>
+                        <span class="header-port">🚪 Port</span>
+                        <span class="header-service">⚙️ Service</span>
+                    </div>
                     <div id="attack-entries">
                         <div class="no-attacks">
                             🔍 Waiting for attacks...

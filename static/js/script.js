@@ -76,9 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (index === 0) entry.classList.add('new-entry');
             
             entry.innerHTML = `
-                <div><strong>${formatTime(attack.timestamp)}</strong></div>
+                <div style="color: #4ecdc4;">${formatTime(attack.timestamp)}</div>
                 <div style="color: #ffe66d;">${attack.ip}</div>
-                <div style="color: #ff6b6b;">Port ${attack.port}</div>
+                <div style="color: #ff6b6b;">${attack.port}</div>
                 <div style="color: #a8e6cf;">${attack.port_name}</div>
             `;
             
