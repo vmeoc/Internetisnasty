@@ -5,6 +5,20 @@
     box-sizing: border-box;
 }
 
+/* Screen shake animation for scary effect */
+@keyframes screenShake {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-2px) translateY(1px); }
+    20% { transform: translateX(2px) translateY(-1px); }
+    30% { transform: translateX(-1px) translateY(2px); }
+    40% { transform: translateX(1px) translateY(-2px); }
+    50% { transform: translateX(-2px) translateY(1px); }
+    60% { transform: translateX(2px) translateY(-1px); }
+    70% { transform: translateX(-1px) translateY(2px); }
+    80% { transform: translateX(1px) translateY(-2px); }
+    90% { transform: translateX(-1px) translateY(1px); }
+}
+
 body {
     font-family: 'Roboto', sans-serif;
     background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0c0c0c 100%);
@@ -282,51 +296,158 @@ body {
 .history-panel {
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .history-panel h3 {
-    color: #ff6b6b;
+    color: #ff0000;
     margin-bottom: 1rem;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
+    font-family: 'Creepster', cursive;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    animation: bloodPulse 2s ease-in-out infinite;
+    position: relative;
+}
+
+.history-panel h3::before {
+    content: "💀 ";
+    font-size: 1.5rem;
+    animation: skullBob 1.5s ease-in-out infinite;
+}
+
+.history-panel h3::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ff0000, transparent);
+    animation: bloodDrip 3s ease-in-out infinite;
+}
+
+@keyframes bloodPulse {
+    0%, 100% { 
+        color: #ff0000;
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+    50% { 
+        color: #cc0000;
+        text-shadow: 0 0 20px rgba(255, 0, 0, 1), 0 0 30px rgba(255, 0, 0, 0.6);
+    }
+}
+
+@keyframes skullBob {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-3px) rotate(-5deg); }
+}
+
+@keyframes bloodDrip {
+    0% { opacity: 0; transform: scaleX(0); }
+    50% { opacity: 1; transform: scaleX(1); }
+    100% { opacity: 0; transform: scaleX(0); }
 }
 
 .attack-log.compact {
-    background: rgba(30, 30, 30, 0.9);
-    border-radius: 8px;
-    border: 1px solid #333;
+    background: linear-gradient(135deg, rgba(20, 0, 0, 0.95), rgba(40, 10, 10, 0.9));
+    border-radius: 12px;
+    border: 2px solid #ff0000;
     flex: 1;
     overflow-y: auto;
     max-height: 500px;
+    box-shadow: 
+        0 0 20px rgba(255, 0, 0, 0.4),
+        inset 0 0 20px rgba(255, 0, 0, 0.1);
+    position: relative;
+}
+
+.attack-log.compact::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 98px,
+            rgba(255, 0, 0, 0.03) 100px
+        );
+    pointer-events: none;
+    animation: matrixScroll 10s linear infinite;
+}
+
+@keyframes matrixScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(100px); }
 }
 
 .log-header {
     display: grid;
     grid-template-columns: 1fr 1.2fr 0.8fr 1fr;
     gap: 0.5rem;
-    padding: 0.8rem;
-    background: rgba(255, 107, 107, 0.1);
-    border-bottom: 2px solid #ff6b6b;
+    padding: 1rem 0.8rem;
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(139, 0, 0, 0.2));
+    border-bottom: 3px solid #ff0000;
     font-weight: bold;
-    font-size: 0.75rem;
-    color: #ff6b6b;
+    font-size: 0.8rem;
+    color: #ffffff;
     position: sticky;
     top: 0;
     z-index: 10;
+    text-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
+    animation: headerGlitch 4s ease-in-out infinite;
+}
+
+@keyframes headerGlitch {
+    0%, 90%, 100% { 
+        transform: translateX(0);
+        filter: hue-rotate(0deg);
+    }
+    92%, 94%, 96% { 
+        transform: translateX(-2px);
+        filter: hue-rotate(90deg);
+    }
+    93%, 95% { 
+        transform: translateX(2px);
+        filter: hue-rotate(-90deg);
+    }
 }
 
 .log-header span {
     text-align: center;
+    font-family: 'Roboto', monospace;
+    letter-spacing: 1px;
 }
 
 .attack-entry {
     display: grid;
     grid-template-columns: 1fr 1.2fr 0.8fr 1fr;
     gap: 0.5rem;
-    padding: 0.6rem 0.8rem;
-    border-bottom: 1px solid #333;
-    font-size: 0.8rem;
-    line-height: 1.3;
+    padding: 0.8rem;
+    border-bottom: 1px solid rgba(255, 0, 0, 0.2);
+    font-size: 0.85rem;
+    line-height: 1.4;
     align-items: center;
+    position: relative;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.attack-entry::before {
+    content: "⚠️";
+    position: absolute;
+    left: -15px;
+    opacity: 0;
+    font-size: 1.2rem;
+    animation: warningFlash 2s ease-in-out infinite;
+}
+
+@keyframes warningFlash {
+    0%, 70%, 100% { opacity: 0; }
+    75%, 85% { opacity: 1; }
 }
 
 .attack-entry > div {
@@ -334,33 +455,151 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: 'Roboto', monospace;
 }
 
 .attack-entry:hover {
-    background: rgba(255, 107, 107, 0.1);
+    background: rgba(255, 0, 0, 0.15);
+    border-left: 4px solid #ff0000;
+    transform: translateX(4px);
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
 }
 
 .attack-entry.new-entry {
-    background: rgba(255, 107, 107, 0.2);
-    animation: highlightAttack 2s ease-out;
+    background: linear-gradient(90deg, rgba(255, 0, 0, 0.4), rgba(255, 50, 50, 0.2));
+    animation: scaryAttackEntry 3s ease-out;
+    border-left: 5px solid #ff0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
 }
 
-@keyframes highlightAttack {
+.attack-entry.new-entry::before {
+    opacity: 1;
+    animation: dangerPulse 1s ease-in-out 3;
+}
+
+.attack-entry.new-entry::after {
+    content: "🩸";
+    position: absolute;
+    right: -10px;
+    top: 0;
+    font-size: 1.5rem;
+    animation: bloodSplatter 2s ease-out;
+}
+
+@keyframes scaryAttackEntry {
     0% {
-        background: rgba(255, 107, 107, 0.4);
-        transform: scale(1.02);
+        background: rgba(255, 0, 0, 0.8);
+        transform: scale(1.05) rotateX(5deg);
+        box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+    }
+    25% {
+        transform: scale(1.02) rotateX(-2deg);
+        filter: brightness(1.3) contrast(1.2);
+    }
+    50% {
+        transform: scale(1.01) rotateX(1deg);
     }
     100% {
-        background: rgba(255, 107, 107, 0.1);
+        background: rgba(255, 0, 0, 0.2);
+        transform: scale(1) rotateX(0deg);
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+    }
+}
+
+@keyframes dangerPulse {
+    0%, 100% { 
+        opacity: 1;
         transform: scale(1);
     }
+    50% { 
+        opacity: 0.3;
+        transform: scale(1.2);
+    }
+}
+
+@keyframes bloodSplatter {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(0deg);
+    }
+    20% {
+        opacity: 1;
+        transform: scale(1.5) rotate(45deg);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.5) rotate(180deg) translateY(20px);
+    }
+}
+
+/* High-threat attack styling */
+.attack-entry.high-threat {
+    background: linear-gradient(90deg, rgba(255, 0, 0, 0.6), rgba(139, 0, 0, 0.4));
+    border: 2px solid #ff0000;
+    animation: criticalThreat 2s ease-in-out infinite;
+}
+
+.attack-entry.high-threat::before {
+    content: "💀⚠️";
+    opacity: 1;
+    animation: skullDanger 1s ease-in-out infinite;
+}
+
+@keyframes criticalThreat {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        border-color: #ff0000;
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+        border-color: #ff6666;
+    }
+}
+
+@keyframes skullDanger {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(-10deg); }
 }
 
 .no-attacks {
     text-align: center;
-    color: #666;
+    color: #ff0000;
     padding: 2rem;
     font-style: italic;
+    font-family: 'Creepster', cursive;
+    font-size: 1.1rem;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+    animation: eerieBreathe 3s ease-in-out infinite;
+    position: relative;
+}
+
+.no-attacks::before {
+    content: "👁️ ";
+    font-size: 1.5rem;
+    animation: eyeBlink 4s ease-in-out infinite;
+}
+
+.no-attacks::after {
+    content: " 👁️";
+    font-size: 1.5rem;
+    animation: eyeBlink 4s ease-in-out infinite 0.5s;
+}
+
+@keyframes eerieBreathe {
+    0%, 100% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+        text-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+    }
+}
+
+@keyframes eyeBlink {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.1; }
 }
 
 /* --- Status Bar --- */

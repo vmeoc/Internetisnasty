@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAttackHistory() {
         if (attackHistory.length === 0) {
-            attackEntries.innerHTML = '<div class="no-attacks">🔍 Waiting for attacks...</div>';
+            attackEntries.innerHTML = '<div class="no-attacks">The darkness watches... waiting for prey...</div>';
             return;
         }
         
@@ -71,13 +71,26 @@ document.addEventListener('DOMContentLoaded', () => {
         recentAttacks.forEach((attack, index) => {
             const entry = document.createElement('div');
             entry.className = 'attack-entry';
-            if (index === 0) entry.classList.add('new-entry');
+            if (index === 0) {
+                entry.classList.add('new-entry');
+                // Add scary screen shake effect for new attacks
+                document.body.style.animation = 'screenShake 0.5s ease-in-out';
+                setTimeout(() => {
+                    document.body.style.animation = '';
+                }, 500);
+            }
+            
+            // Determine if this is a high-threat attack (common hacking ports)
+            const highThreatPorts = [22, 23, 3389, 445, 135, 1433, 3306];
+            if (highThreatPorts.includes(parseInt(attack.port))) {
+                entry.classList.add('high-threat');
+            }
             
             entry.innerHTML = `
-                <div style="color: #4ecdc4;">${formatTime(attack.timestamp)}</div>
-                <div style="color: #ff9500;">${attack.ip}</div>
-                <div style="color: #ff6b6b;">${attack.port}</div>
-                <div style="color: #a8e6cf;">${attack.port_name}</div>
+                <div style="color: #ff4444; font-weight: bold;">${formatTime(attack.timestamp)}</div>
+                <div style="color: #ff6666; font-family: monospace;">${attack.ip}</div>
+                <div style="color: #ff0000; font-weight: bold; font-size: 1.1em;">${attack.port}</div>
+                <div style="color: #ffaaaa;">${attack.port_name}</div>
             `;
             
             attackEntries.appendChild(entry);
