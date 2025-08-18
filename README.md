@@ -62,6 +62,21 @@ This project creates an educational cybersecurity demonstration showing how inte
 - **Service Management**: `sudo systemctl restart internet-is-nasty`
 - **Live Logs**: `sudo journalctl -u internet-is-nasty -f`
 
+### Step 5: Enable HTTPS (Optional)
+1. **Configure Lightsail Firewall:**
+   - Add rule: `HTTPS (443) - TCP - Anywhere (0.0.0.0/0)`
+   - Keep `HTTP (80)` open for SSL certificate renewal
+
+2. **Enable SSL with Let's Encrypt:**
+   ```bash
+   chmod +x enable-https.sh
+   ./enable-https.sh your-domain.com
+   ```
+
+3. **Access with HTTPS:**
+   - **Secure Interface**: `https://your-domain.com`
+   - **Auto-renewal**: Certificates renew automatically daily at 3 AM
+
 ## 🔧 Management Commands
 
 ### Service Control
